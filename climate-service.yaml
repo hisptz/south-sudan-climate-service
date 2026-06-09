@@ -1,0 +1,10 @@
+id: south-sudan-climate-service             # unique identifier for this instance
+name: South Sudan Climate Service           # display name shown in the web UI
+
+extent:
+  name: South Sudan
+  bbox: [ 23.15, 3.20,36.40,12.70 ]    # [xmin, ymin, xmax, ymax] in WGS84
+  country_code: SS                   # ISO 3166-1 alpha-3, required for WorldPop
+
+data_dir: ./data
+plugins_dir: ./plugins/
