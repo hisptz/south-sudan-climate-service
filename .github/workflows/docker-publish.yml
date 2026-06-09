@@ -6,6 +6,13 @@ on:
       - main
     tags:
       - "**"
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "climate-service.yaml"
+      - "plugins/**"
 
 env:
   REGISTRY: ghcr.io
