@@ -4,6 +4,12 @@
 # ============================================================
 FROM python:3.14-slim-bookworm AS builder
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Copy uv binary from the official distroless image.
 # Pin to a specific version for reproducible builds.
 COPY --from=ghcr.io/astral-sh/uv:0.7.12 /uv /uvx /bin/
@@ -51,6 +57,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # No uv, no git, no build tools.
 # ============================================================
 FROM python:3.14-slim-bookworm
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libexpat1 && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
