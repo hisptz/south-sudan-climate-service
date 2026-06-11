@@ -37,7 +37,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # This layer is invalidated frequently (config changes, new plugins),
 # but the dependency layer above is already cached.
 COPY climate-service.yaml ./
-COPY plugins/ ./plugins/
 
 # Final sync. Since package = false in pyproject.toml there is
 # nothing more to "install", but this validates the environment
