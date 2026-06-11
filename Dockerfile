@@ -60,7 +60,6 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy instance files needed at runtime.
 COPY --from=builder /app/climate-service.yaml ./
-COPY --from=builder /app/plugins/ ./plugins/
 
 # Put the venv on PATH so uvicorn and all installed entry points
 # are found without needing `uv run`.
