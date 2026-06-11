@@ -25,8 +25,6 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY climate-service.yaml ./
 
-RUN mkdir -p data plugins && chown -R app:app /app
-
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     CLIMATE_SERVICE_CONFIG=/app/climate-service.yaml
