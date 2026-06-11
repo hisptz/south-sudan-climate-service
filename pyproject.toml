@@ -1,32 +1,29 @@
 [project]
 name = "south-sudan-climate-service"
 version = "0.1.0"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
-    "open-climate-service @ git+https://github.com/dhis2/open-climate-service.git",
-    "uvicorn>=0.41.0",
-    "fastapi>=0.100.0",
-    "jinja2>=3.1",
-    "starlette>=0.27.0",
-    "python-dotenv>=1.0.1",
-    "geojson-pydantic>=2.1.0",
-    "metpy>=1.7,<2",
-    "xstac>=1.0,<2",
-    "xarray>=2025.12.0",
-    "zarr>=3.1.6,<4",
-    "icechunk>=2.0,<3",
-    "geozarr-toolkit==0.1.*",
-    "topozarr==0.0.*",
-    "rioxarray>=0.17",
-    "portalocker>=3.2.0",
-    "dhis2eo>=1.2.1",
-    "python-multipart>=0.0.29",
-    "xclim>=0.61.1",
-    "pyyaml",
+    "open-climate-service[server,xarray] @ git+https://github.com/dhis2/open-climate-service.git"
 ]
 
 [tool.uv]
 package = false
+override-dependencies = [
+    # openeo-pg-parser-networkx requires geojson-pydantic<2.0.0; our project uses >=2.1.0 which is compatible at runtime
+    "geojson-pydantic>=2.1.0",
+    # openeo-processes-dask-slim has stale constraints; all safe to override (library doesn't use these directly)
+    "zarr>=3.1.6",
+    "pyarrow>=19.0",
+    "xarray>=2025.12.0",
+    "numpy>=2.2",
+    "dask>=2024.1.0",
+    "dask-geopandas>=0.4",
+    "geopandas>=1.1",
+    "xvec>=0.3",
+    "rioxarray>=0.17",
+    "pystac>=1.10",
+]
 
 [tool.uv.sources]
 open-climate-service = { git = "https://github.com/dhis2/open-climate-service.git", branch = "main" }
+openeo-processes-dask-slim = { git = "https://github.com/dhis2/openeo-processes-dask-slim", branch = "main" }
