@@ -17,6 +17,10 @@ RUN uv sync --frozen --no-dev --link-mode=copy
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
 FROM python:3.13-slim AS runtime
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libexpat1 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system app && useradd --system --gid app app
 
 WORKDIR /app
