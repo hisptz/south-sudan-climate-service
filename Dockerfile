@@ -1,17 +1,17 @@
+# Base container
+FROM python:3.14-slim AS base
 # ============================================================
 # Stage 1: builder
 # Install uv, resolve and install all dependencies into .venv
 # ============================================================
-FROM python:3.14-slim AS builder
-
-
+FROM base AS builder
 
 # Copy uv binary from the official distroless image.
 # Pin to a specific version for reproducible builds.
-COPY --from=ghcr.io/astral-sh/uv:0.7.12 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.21 /uv /uvx /bin/
 
 # ── System build dependencies ──────────────────────────────
-# python:3.12-slim-bookworm ships almost nothing. We need:
+# python:3.14-slim ships almost nothing. We need:
 #
 #   git             – uv clones open-climate-service directly from
 #                     GitHub (git+https://...), this must be present
@@ -87,7 +87,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Minimal image — only Python, the venv, and instance files.
 # No uv, no git, no build tools.
 # ============================================================
-FROM python:3.14-slim
+FROM base AS runner
 
 # ── Runtime-only system libraries ──────────────────────────
 # The compiled C extensions (.so files) inside the venv link against
@@ -96,14 +96,17 @@ FROM python:3.14-slim
 #
 #   libgomp1    – OpenMP runtime, linked by numpy's BLAS routines.
 #   libstdc++6  – C++ standard library, linked by several extensions.
+#   libexpat1   - C library for parsing XML files
 #
-# python:3.12-slim-bookworm already ships libgcc-s1 and glibc,
+# python:3.14-slim already ships libgcc-s1 and glibc,
 # so we only need to add what's missing at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgomp1 \
         libstdc++6 \
         libexpat1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system eo \
+    && useradd --system --gid eo --no-create-home eo
 
 WORKDIR /app
 
@@ -112,6 +115,9 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy instance files needed at runtime.
 COPY --from=builder /app/climate-service.yaml ./
+
+# Give the non-root user ownership of the app directory.
+RUN chown -R eo:eo /app
 
 # Put the venv on PATH so uvicorn and all installed entry points
 # are found without needing `uv run`.
@@ -124,6 +130,8 @@ ENV CLIMATE_SERVICE_CONFIG=/app/climate-service.yaml
 # data/ is volume-mounted at runtime — downloaded Zarr stores
 # should not live inside the container image.
 VOLUME ["/app/data"]
+
+USER eo
 
 EXPOSE 8000
 
