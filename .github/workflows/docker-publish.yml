@@ -12,7 +12,7 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "climate-service.yaml"
-      - "plugins/**"
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

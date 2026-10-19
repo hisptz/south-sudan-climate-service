@@ -56,30 +56,27 @@ ENV UV_COMPILE_BYTECODE=1
 
 WORKDIR /app
 
-# ── Dependency installation layer ──────────────────────────────
-# Mount pyproject.toml and uv.lock without COPY so this layer is
-# only invalidated when those two files change, not when your
-# config yaml or plugins change.
-# --no-install-project: install transitive deps but not the project
-# itself (there is no project to install — package = false).
-# --locked: assert uv.lock is consistent with pyproject.toml.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+COPY pyproject.toml uv.lock ./
 
-# ── Copy the rest of the instance files ────────────────────────
-# This layer is invalidated frequently (config changes, new plugins),
-# but the dependency layer above is already cached.
+# ── Cache-bust on new open-climate-service commits ─────────────
+# open-climate-service is installed straight from its GitHub `main`
+# branch (see pyproject.toml / uv.lock). Docker's ADD instruction for
+# a remote URL re-checks the response (ETag/Last-Modified) on every
+# build and busts the layer cache — and everything after it — when
+# the resource changed, i.e. whenever `main` gets new commits. This
+# is what forces the steps below to actually re-run instead of being
+# served from a stale cached layer.
+ADD https://api.github.com/repos/dhis2/open-climate-service/commits/main /tmp/open-climate-service-head.json
+
+# Re-resolve open-climate-service to the current tip of `main` (the
+# committed uv.lock may pin an older commit), then install. --locked
+# still guards the rest of the dependency tree against drift.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv lock --upgrade-package open-climate-service \
+    && uv sync --locked
+
+# Instance config is baked into the image (copied in the runtime stage).
 COPY climate-service.yaml ./
-COPY pyproject.toml ./
-COPY uv.lock ./
-
-# Final sync. Since package = false in pyproject.toml there is
-# nothing more to "install", but this validates the environment
-# is complete and consistent with the lockfile.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
 
 
 # ============================================================
@@ -105,8 +102,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libstdc++6 \
         libexpat1 \
     && rm -rf /var/lib/apt/lists/* \
-    && groupadd --system eo \
-    && useradd --system --gid eo --no-create-home eo
+    && groupadd --system ocs \
+    && useradd --system --gid ocs --create-home ocs
 
 WORKDIR /app
 
@@ -116,8 +113,8 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy instance files needed at runtime.
 COPY --from=builder /app/climate-service.yaml ./
 
-# Give the non-root user ownership of the app directory.
-RUN chown -R eo:eo /app
+# Create the data folder and give the non-root user ownership of /app.
+RUN mkdir -p /app/data && chown -R ocs:ocs /app
 
 # Put the venv on PATH so uvicorn and all installed entry points
 # are found without needing `uv run`.
@@ -129,9 +126,11 @@ ENV CLIMATE_SERVICE_CONFIG=/app/climate-service.yaml
 
 # data/ is volume-mounted at runtime — downloaded Zarr stores
 # should not live inside the container image.
+# ERA5-Land credentials can be mounted read-only at
+# /home/ocs/.ecmwfdatastoresrc.
 VOLUME ["/app/data"]
 
-USER eo
+USER ocs
 
 EXPOSE 8000
 

@@ -3,7 +3,7 @@ name = "south-sudan-climate-service"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
-    "open-climate-service[server,xarray] @ git+https://github.com/dhis2/open-climate-service.git"
+    "open-climate-service[server,xarray,dhis2] @ git+https://github.com/dhis2/open-climate-service.git"
 ]
 
 [tool.uv]
