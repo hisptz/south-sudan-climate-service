@@ -9,3 +9,19 @@ extent:
 data_dir: ./data
 
 # plugins_dir: ./plugins/   # optional — plugin root: dataset templates in rasters/ and vectors/
+
+# Optional: post to a webhook (Slack/Mattermost incoming-webhook URLs work as-is) when a
+# scheduled sync or a pipeline starts failing, and when it recovers.
+# notifications:
+#   webhook_url: ${OCS_WEBHOOK_URL}
+
+# Optional: DHIS2 connections that pipelines deliver to. Pipelines are created on the
+# Pipelines page or via POST /pipelines. Values here must be literal (no ${...}); the
+# token is read from the env var named in token_env.
+# dhis2_connections:
+#   - id: national-hmis
+#     url: https://hmis.example.org/dhis
+#     token_env: DHIS2_IMPORT_TOKEN
+
+# NOTE: the top-level `automation` and `exports` keys were retired upstream (CLIM-1426);
+# the service refuses to start if they are present.
